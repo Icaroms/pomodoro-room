@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <!-- ============================================
+         CONTAINER PRINCIPAL
+         Envolve todo o jogo em uma div central
+         Facilita o posicionamento e responsividade
+         ============================================ -->
+    <div id="game-container">
+        <!-- ============================================
+             HEADER DO JOGO
+             Mostra o nome do jogo e informações do jogador
+             (moedas, nível, etc.)
+             ============================================ -->
+        <header id="game-header">
+            <h1>Pomodoro Room</h1>
+            <!-- Área que mostra as moedas do jogador -->
+            <!-- O JavaScript vai atualizar o número dentro do <span> -->
+            <div id="coins-display">
+                🪙 <span id="coins-count">0</span>
+            </div>
+        </header>
+
+        <!-- ============================================
+             CANVAS — O CORAÇÃO DO JOGO
+             
+             É aqui que o quarto será desenhado!
+             
+             O <canvas> é um elemento HTML que funciona
+             como uma "tela de pintura" onde o JavaScript
+             desenha gráficos, sprites e animações.
+             
+             - width/height: tamanho em pixels da área de desenho
+             - O JavaScript vai acessar esse canvas pelo id
+               e usar o contexto 2D para desenhar
+             ============================================ -->
+        <canvas id="game-canvas" width="480" height="480">
+            <!-- Texto exibido apenas se o navegador não suportar canvas -->
+            Seu navegador não suporta Canvas. Atualize para jogar.
+        </canvas>
+
+
+    <!-- ============================================
+         SCRIPTS JAVASCRIPT
+         
+         ⚠️  A ORDEM IMPORTA!
+         
+         Os scripts são carregados de cima para baixo.
+         Colocamos na seguinte ordem:
+         
+         1. storage.js  → primeiro, porque outros módulos
+                          precisam carregar/salvar dados
+         2. coins.js    → gerencia moedas (depende do storage)
+         3. timer.js    → lógica do Pomodoro (depende do coins)
+         4. shop.js     → loja de itens (depende de coins e storage)
+         5. room.js     → desenha o quarto no canvas (depende de storage)
+         6. main.js     → POR ÚLTIMO! Inicializa tudo e conecta os módulos
+         
+         Usamos "defer" para que os scripts só executem
+         DEPOIS que todo o HTML for carregado. Isso evita
+         erros como "elemento não encontrado".
+         ============================================ -->
+    <script src="js/storage.js" defer></script>
+    <script src="js/coins.js" defer></script>
+    <script src="js/timer.js" defer></script>
+    <script src="js/shop.js" defer></script>
+    <script src="js/room.js" defer></script>
+    <script src="js/main.js" defer></script>
+</body>
+</html>
