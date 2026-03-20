@@ -2,86 +2,83 @@
 // STORAGE.JS — Salvar e Carregar dados do jogo
 // ============================================
 //
-// Este módulo é responsável por persistir (salvar) o estado do jogo
-// mesmo quando o jogador fecha o navegador.
+// O localStorage é como um "caderninho" do navegador.
+// Ele guarda dados em pares: chave → valor
+// Mesmo fechando o navegador, os dados continuam lá.
 //
-// Pesquise na MDN: localStorage, JSON.stringify(), JSON.parse()
+// REGRA IMPORTANTE: ele só guarda STRINGS (texto).
+// Pra salvar objetos ou números, convertemos com JSON.
 //
+
 
 // --- FUNÇÃO: SALVAR DADO ---
-// Recebe: uma chave (string) e um valor (qualquer tipo)
-// O que faz: salva o valor no localStorage
-//
-// ATENÇÃO: o localStorage só guarda STRINGS!
-// Se você quiser salvar um objeto ou array, precisa converter
-// pra string antes usando JSON.stringify()
-//
-// Exemplo de uso futuro:
-//   saveData('coins', 50)
-//   saveData('room', { items: [...] })
-function saveData(key, value) {
-    try {
-        const jsonData = JSON.stringify(value); // Converte o valor para string JSON
-        localStorage.setItem(key, jsonData); // Salva no localStorage
-    } catch (error) {
-        console.error("Erro ao salvar dados:", error);
+// Recebe: chave (string) e valor (qualquer tipo)
+// Exemplo: saveData('coins', 50)
+// Exemplo: saveData('room', { items: ['bed', 'desk'] })
 
-    }
+function saveData(key, value) {
+    // JSON.stringify() converte qualquer coisa em string
+    // Número 50          → string "50"
+    // Objeto {a: 1}      → string '{"a":1}'
+    // Array [1, 2, 3]    → string '[1,2,3]'
+    const dataString = JSON.stringify(value);
+
+    // localStorage.setItem(chave, valor) salva no navegador
+    localStorage.setItem(key, dataString);
 }
+
 
 // --- FUNÇÃO: CARREGAR DADO ---
-// Recebe: uma chave (string)
-// Retorna: o valor salvo, ou null se não existir
-//
-// ATENÇÃO: como o localStorage salva tudo como string,
-// você precisa converter de volta usando JSON.parse()
-//
-// Cuidado: se a chave não existir, localStorage.getItem()
-// retorna null. Trate esse caso!
-//
-// Exemplo de uso futuro:
-//   const coins = loadData('coins')    → retorna 50
-//   const room = loadData('room')      → retorna { items: [...] }
-//   const nada = loadData('inexiste')  → retorna null
+// Recebe: chave (string)
+// Retorna: o valor salvo (já convertido de volta), ou null se não existir
+// Exemplo: loadData('coins')  → retorna 50 (número, não string)
 
 function loadData(key) {
-    try {
-        const jsonData = localStorage.getItem(key); // Carrega do localStorage
-        return jsonData ? JSON.parse(jsonData) : null; // Converte de volta para objeto
-    } catch (error) {
-        console.error("Erro ao carregar dados:", error);
+    // localStorage.getItem(chave) busca o valor salvo
+    // Se a chave não existir, retorna null
+    const dataString = localStorage.getItem(key);
+
+    // Se não existe, retorna null direto
+    // (sem isso, JSON.parse(null) poderia causar problemas)
+    if (dataString === null) {
         return null;
     }
+
+    // JSON.parse() faz o caminho inverso do stringify:
+    // String "50"        → Número 50
+    // String '{"a":1}'   → Objeto {a: 1}
+    // String '[1,2,3]'   → Array [1, 2, 3]
+    return JSON.parse(dataString);
 }
+
 
 // --- FUNÇÃO: LIMPAR UM DADO ---
-// Recebe: uma chave (string)
-// O que faz: remove aquela chave do localStorage
-//
-// Pesquise: localStorage.removeItem()
-//
-// Útil se o jogador quiser resetar o progresso
-function clearData(key) {
-    try {
-        localStorage.removeItem(key); // Remove a chave do localStorage
-    } catch (error) {
-        console.error("Erro ao limpar dados:", error);
-    }
+// Recebe: chave (string)
+// Remove apenas aquela chave específica
+// Exemplo: removeData('coins')  → apaga só as moedas
+
+function removeData(key) {
+    // localStorage.removeItem(chave) apaga um dado específico
+    localStorage.removeItem(key);
 }
 
-// --- FUNÇÃO: LIMPAR TUDO ---
+
+// --- FUNÇÃO: LIMPAR TUDO DO JOGO ---
 // Não recebe nada
-// O que faz: apaga TODOS os dados salvos do jogo
+// Apaga todos os dados salvos pelo jogo
 //
-// Pesquise: localStorage.clear()
-//
-// ⚠️  Use com cuidado — apaga TUDO, não só do seu jogo
-// Uma alternativa mais segura: limpar só as chaves que
-// você criou, uma por uma
+// Em vez de usar localStorage.clear() (que apaga TUDO do navegador,
+// inclusive dados de outros sites), vamos apagar só as nossas chaves.
+
 function clearAllData() {
-    try {
-        localStorage.clear(); // Limpa todo o localStorage
-    } catch (error) {
-        console.error("Erro ao limpar todos os dados:", error);
-    }
+    // Lista de todas as chaves que o nosso jogo usa
+    // Quando criar novas chaves no futuro, adicione aqui também
+    const gameKeys = ['coins', 'room', 'shopItems'];
+
+    // .forEach() percorre cada item do array e executa a função
+    // É como um "for" mais limpo
+    // Pra cada chave na lista → remove ela do localStorage
+    gameKeys.forEach(function (key) {
+        localStorage.removeItem(key);
+    });
 }

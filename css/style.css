@@ -1,0 +1,268 @@
+/* ============================================
+   STYLE.CSS — Estilos do Pomodoro Room
+   ============================================
+   Estética: Pixel Art / Retro Game
+   Fonte: Press Start 2P (Google Fonts)
+   ============================================ */
+
+
+/* --- RESET E BASE --- */
+/* Remove margens/paddings padrão do navegador */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: #1a1a2e;
+    color: #e0e0e0;
+    font-family: 'Press Start 2P', monospace;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+
+/* --- CONTAINER PRINCIPAL --- */
+/* Centraliza e limita a largura do jogo */
+
+#game-container {
+    background-color: #16213e;
+    border: 4px solid #0f3460;
+    border-radius: 4px;
+    max-width: 520px;
+    width: 100%;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+
+    /* Sombra pixel art (sólida, sem blur) */
+    box-shadow: 8px 8px 0px #0a0a1a;
+}
+
+
+/* --- HEADER --- */
+
+#game-header {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+#game-header h1 {
+    font-size: 14px;
+    color: #e94560;
+    /* Sombra no texto pra dar efeito retro */
+    text-shadow: 2px 2px 0px #0a0a1a;
+}
+
+#coins-display {
+    font-size: 12px;
+    background-color: #0f3460;
+    padding: 8px 12px;
+    border: 2px solid #533483;
+    border-radius: 2px;
+}
+
+
+/* --- CANVAS (QUARTO) --- */
+
+#game-canvas {
+    border: 4px solid #0f3460;
+    border-radius: 2px;
+    max-width: 100%;
+    height: auto;
+    /* Mantém os pixels nítidos (sem suavização) */
+    image-rendering: pixelated;
+}
+
+
+/* --- TIMER --- */
+
+#timer-panel {
+    width: 100%;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+}
+
+#timer-display {
+    font-size: 32px;
+    color: #e94560;
+    text-shadow: 2px 2px 0px #0a0a1a;
+    letter-spacing: 4px;
+}
+
+#timer-controls {
+    display: flex;
+    gap: 8px;
+}
+
+#timer-status {
+    font-size: 10px;
+    color: #533483;
+}
+
+
+/* --- BOTÕES (estilo pixel art) --- */
+
+button {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 10px;
+    padding: 10px 16px;
+    background-color: #533483;
+    color: #e0e0e0;
+    border: 3px solid #e94560;
+    border-radius: 2px;
+    cursor: pointer;
+    transition: background-color 0.1s;
+    /* Sombra sólida pra efeito de botão "elevado" */
+    box-shadow: 3px 3px 0px #0a0a1a;
+}
+
+button:hover {
+    background-color: #e94560;
+}
+
+/* Botão pressionado — desce a sombra */
+button:active {
+    box-shadow: 1px 1px 0px #0a0a1a;
+    transform: translate(2px, 2px);
+}
+
+/* Botão desabilitado — visual apagado */
+button:disabled {
+    background-color: #2a2a4a;
+    border-color: #444;
+    color: #666;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+
+/* --- NAVEGAÇÃO (QUARTO / LOJA) --- */
+
+#game-nav {
+    display: flex;
+    gap: 8px;
+    width: 100%;
+}
+
+#game-nav button {
+    flex: 1;
+    text-align: center;
+}
+
+/* Botão ativo da nav — destaque visual */
+#game-nav button.active {
+    background-color: #e94560;
+    border-color: #ffffff;
+}
+
+
+/* --- PAINEL DA LOJA --- */
+
+#shop-panel {
+    width: 100%;
+}
+
+#shop-panel h2 {
+    font-size: 12px;
+    color: #e94560;
+    text-align: center;
+    margin-bottom: 12px;
+    text-shadow: 2px 2px 0px #0a0a1a;
+}
+
+#shop-items {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+}
+
+/* Card de cada item na loja */
+.shop-item {
+    background-color: #0f3460;
+    border: 2px solid #533483;
+    border-radius: 2px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    text-align: center;
+}
+
+/* Ícone placeholder do item (letra grande) */
+.item-icon {
+    width: 48px;
+    height: 48px;
+    background-color: #533483;
+    border: 2px solid #e94560;
+    border-radius: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    color: #ffffff;
+}
+
+.item-name {
+    font-size: 8px;
+    color: #e0e0e0;
+}
+
+.item-price {
+    font-size: 8px;
+    color: #f1c40f;
+}
+
+.shop-item button {
+    font-size: 8px;
+    padding: 6px 10px;
+}
+
+.purchased-label {
+    font-size: 8px;
+    color: #27ae60;
+}
+
+
+/* --- CLASSE UTILITÁRIA: ESCONDER ELEMENTOS --- */
+/* Usada pela navegação pra alternar entre quarto e loja */
+
+.hidden {
+    display: none !important;
+}
+
+
+/* --- RESPONSIVIDADE --- */
+/* Ajustes pra telas menores (celular) */
+
+@media (max-width: 480px) {
+    #game-header h1 {
+        font-size: 10px;
+    }
+
+    #timer-display {
+        font-size: 24px;
+    }
+
+    button {
+        font-size: 8px;
+        padding: 8px 12px;
+    }
+
+    #shop-items {
+        grid-template-columns: 1fr;
+    }
+}

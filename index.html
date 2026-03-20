@@ -1,17 +1,46 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
+    <!-- ============================================
+         META TAGS
+         Configurações básicas que o navegador precisa
+         ============================================ -->
+
+    <!-- Define a codificação de caracteres (UTF-8 suporta acentos: ã, é, ç) -->
     <meta charset="UTF-8">
+
+    <!-- Faz o site se adaptar ao tamanho da tela (celular, tablet, desktop) -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+
+    <!-- Título que aparece na aba do navegador -->
+    <title>Pomodoro Room</title>
+
+    <!-- ============================================
+         CSS
+         Link para a folha de estilos do jogo
+         ============================================ -->
+
+    <!-- Conecta o arquivo de estilos que vai definir cores, fontes, layout -->
+    <link rel="stylesheet" href="css/style.css">
+
+    <!-- ============================================
+         FONTE PIXEL ART (opcional mas recomendado)
+         Importa uma fonte com estética pixelada
+         do Google Fonts para manter a identidade visual
+         ============================================ -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 </head>
+
 <body>
+
     <!-- ============================================
          CONTAINER PRINCIPAL
          Envolve todo o jogo em uma div central
          Facilita o posicionamento e responsividade
          ============================================ -->
     <div id="game-container">
+
         <!-- ============================================
              HEADER DO JOGO
              Mostra o nome do jogo e informações do jogador
@@ -19,6 +48,7 @@
              ============================================ -->
         <header id="game-header">
             <h1>Pomodoro Room</h1>
+
             <!-- Área que mostra as moedas do jogador -->
             <!-- O JavaScript vai atualizar o número dentro do <span> -->
             <div id="coins-display">
@@ -43,6 +73,72 @@
             <!-- Texto exibido apenas se o navegador não suportar canvas -->
             Seu navegador não suporta Canvas. Atualize para jogar.
         </canvas>
+
+        <!-- ============================================
+             PAINEL DO TIMER POMODORO
+             
+             Controles do timer: mostrador de tempo,
+             botões de iniciar/pausar/resetar
+             ============================================ -->
+        <section id="timer-panel">
+
+            <!-- Mostra o tempo restante (ex: 25:00) -->
+            <!-- O JavaScript vai atualizar esse texto a cada segundo -->
+            <div id="timer-display">25:00</div>
+
+            <!-- Botões de controle do timer -->
+            <div id="timer-controls">
+                <!-- Cada botão tem um id para o JS poder "escutar" os cliques -->
+                <button id="btn-start">Iniciar</button>
+                <button id="btn-pause" disabled>Pausar</button>
+                <button id="btn-reset">Resetar</button>
+            </div>
+
+            <!-- Indica em qual fase estamos: trabalho ou descanso -->
+            <div id="timer-status">Modo: Trabalho</div>
+        </section>
+
+        <!-- ============================================
+             PAINEL DA LOJA
+             
+             Onde o jogador gasta moedas em móveis/decorações.
+             Começa escondido (hidden) e aparece quando
+             o jogador clica em "Loja".
+             
+             Os itens serão inseridos aqui pelo JavaScript
+             dinamicamente (shop.js vai criar os elementos).
+             ============================================ -->
+        <section id="shop-panel" class="hidden">
+            <h2>Loja</h2>
+
+            <!-- Container onde os itens da loja serão renderizados pelo JS -->
+            <div id="shop-items">
+                <!-- Exemplo de como um item vai ficar (gerado pelo JS):
+                
+                <div class="shop-item">
+                    <img src="assets/sprites/bed.png" alt="Cama">
+                    <span>Cama</span>
+                    <span>🪙 50</span>
+                    <button>Comprar</button>
+                </div>
+                
+                -->
+            </div>
+        </section>
+
+        <!-- ============================================
+             NAVEGAÇÃO / MENU
+             
+             Botões para alternar entre as "telas" do jogo:
+             ver o quarto, abrir a loja, etc.
+             ============================================ -->
+        <nav id="game-nav">
+            <button id="btn-room" class="active">Quarto</button>
+            <button id="btn-shop">Loja</button>
+        </nav>
+
+    </div>
+    <!-- Fim do game-container -->
 
 
     <!-- ============================================
@@ -71,5 +167,6 @@
     <script src="js/shop.js" defer></script>
     <script src="js/room.js" defer></script>
     <script src="js/main.js" defer></script>
+
 </body>
 </html>
