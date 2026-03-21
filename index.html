@@ -11,7 +11,27 @@
 
 <body>
 
-    <div id="game-container">
+    <!-- ============================================
+         TELA INICIAL
+         Aparece ao abrir o jogo. Esconde ao clicar "Jogar".
+         ============================================ -->
+    <div id="start-screen">
+        <div id="start-content">
+            <div id="start-icon">🍅</div>
+            <h1 id="start-title">Pomodoro<br>Room</h1>
+            <p id="start-subtitle">Foque. Ganhe. Decore.</p>
+            <div id="start-instructions">
+                <span>🎮 WASD ou Setas para mover</span>
+                <span>🖱️ Arraste para mover móveis</span>
+                <span>🍅 Complete pomodoros e ganhe moedas</span>
+                <span>🛋️ Decore seu quarto na loja</span>
+            </div>
+            <button id="btn-play">Jogar</button>
+            <p id="start-version">v1.0</p>
+        </div>
+    </div>
+
+    <div id="game-container" class="hidden">
 
         <!-- HEADER -->
         <header id="game-header">

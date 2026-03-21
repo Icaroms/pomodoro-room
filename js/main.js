@@ -1,24 +1,32 @@
 // ============================================
 // MAIN.JS — Orquestrador do Jogo
 // ============================================
-//
-// Este arquivo é o último a carregar.
-// Todos os outros módulos já estão prontos neste ponto.
-//
-// Responsabilidade: inicializar o jogo e
-// conectar partes que precisam se conhecer.
-//
 
 
-// --- INICIALIZAÇÃO DO JOGO ---
-// Tudo já foi inicializado nos próprios módulos,
-// mas centralizamos aqui qualquer lógica futura.
+// --- REFERÊNCIAS ---
 
-function initGame() {
+const startScreen = document.getElementById('start-screen');
+const gameContainer = document.getElementById('game-container');
+const btnPlay = document.getElementById('btn-play');
+
+
+// --- TELA INICIAL → JOGO ---
+// Ao clicar "Jogar", esconde a tela inicial e mostra o jogo
+
+btnPlay.addEventListener('click', function () {
+    // Esconde a tela inicial
+    startScreen.classList.add('hidden');
+
+    // Mostra o jogo com animação de fade in
+    gameContainer.classList.remove('hidden');
+    gameContainer.classList.add('fade-in');
+
+    // Remove a classe de animação depois que terminar
+    // (evita re-animar se algo mudar depois)
+    setTimeout(function () {
+        gameContainer.classList.remove('fade-in');
+    }, 500);
+
     console.log('🎮 Pomodoro Room iniciado!');
     console.log(`🪙 Saldo atual: ${getCoins()} moedas`);
-    console.log(`🏠 Itens no quarto: ${roomItems.length}`);
-}
-
-// Executa a inicialização
-initGame();
+});
