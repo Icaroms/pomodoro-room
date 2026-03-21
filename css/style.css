@@ -34,7 +34,7 @@ body {
     background-color: #16213e;
     border: 4px solid #0f3460;
     border-radius: 4px;
-    max-width: 520px;
+    max-width: 640px;
     width: 100%;
     padding: 20px;
     display: flex;
@@ -92,7 +92,31 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
+}
+
+/* Configuração do tempo de foco */
+#timer-config {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 8px;
+}
+
+#timer-config label {
+    color: #e0e0e0;
+}
+
+#timer-config input {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 10px;
+    width: 60px;
+    padding: 6px 8px;
+    background-color: #0f3460;
+    color: #e94560;
+    border: 2px solid #533483;
+    border-radius: 2px;
+    text-align: center;
 }
 
 #timer-display {
@@ -102,6 +126,13 @@ body {
     letter-spacing: 4px;
 }
 
+/* Rodada atual */
+#round-display {
+    font-size: 8px;
+    color: #f1c40f;
+    letter-spacing: 1px;
+}
+
 #timer-controls {
     display: flex;
     gap: 8px;
@@ -109,7 +140,8 @@ body {
 
 #timer-status {
     font-size: 10px;
-    color: #533483;
+    color: #27ae60;
+    letter-spacing: 1px;
 }
 
 
@@ -202,8 +234,8 @@ button:disabled {
     text-align: center;
 }
 
-/* Ícone placeholder do item (letra grande) */
-.item-icon {
+/* Wrapper do ícone do item na loja */
+.item-icon-wrapper {
     width: 48px;
     height: 48px;
     background-color: #533483;
@@ -212,8 +244,31 @@ button:disabled {
     display: flex;
     align-items: center;
     justify-content: center;
+    overflow: hidden;
+}
+
+/* Sprite real do item (imagem PNG) */
+.item-sprite {
+    width: 48px;
+    height: 48px;
+    image-rendering: pixelated;
+}
+
+/* Fallback quando o sprite não existe (mostra letra) */
+.item-icon-fallback {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     font-size: 18px;
     color: #ffffff;
+}
+
+/* Dica especial (ex: luminária ilumina o quarto) */
+.item-hint {
+    font-size: 6px;
+    color: #f1c40f;
 }
 
 .item-name {
