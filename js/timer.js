@@ -10,7 +10,7 @@
 // - Cada rodada concluída = 10 moedas
 //
 // Status:
-// - "☕ Livre" → timer parado, sem atividade
+// - "☕ Live" → timer parado, sem atividade
 // - "🔥 Focado" → rodada de trabalho em andamento
 // - "🌿 Descansando" → intervalo em andamento
 //
@@ -96,6 +96,7 @@ function startTimer() {
     isRunning = true;
     updateButtons();
     updateStatus(isWorkMode ? '🔥 Focado' : '🌿 Descansando');
+    soundStart();
 
     intervalId = setInterval(function () {
         timeRemaining--;
@@ -116,6 +117,7 @@ function pauseTimer() {
     isRunning = false;
     updateButtons();
     btnStart.disabled = false;
+    soundPause();
 }
 
 
@@ -142,7 +144,7 @@ function resetTimer() {
 
     updateDisplay();
     updateRoundDisplay();
-    updateStatus('☕ Livre');
+    updateStatus('☕ Live');
     updateButtons();
 }
 
@@ -155,13 +157,11 @@ function finishCycle() {
     isRunning = false;
 
     if (isWorkMode) {
-        // --- Acabou uma rodada de FOCO ---
-
-        // Recompensa: 10 moedas
         addCoins(COINS_REWARD);
+        soundCoins();
 
         if (currentRound >= TOTAL_ROUNDS) {
-            // --- Rodada 4: descanso LONGO e fim do pomodoro ---
+            soundComplete();
             alert(`🎉 Rodada ${currentRound} completa! +${COINS_REWARD} moedas!\nDescanso longo de 15 minutos.`);
 
             isWorkMode = false;
@@ -169,7 +169,7 @@ function finishCycle() {
             updateStatus('🌿 Descansando (longo)');
 
         } else {
-            // --- Rodadas 1-3: descanso CURTO ---
+            soundComplete();
             alert(`✅ Rodada ${currentRound} completa! +${COINS_REWARD} moedas!\nDescanso de 5 minutos.`);
 
             isWorkMode = false;
@@ -181,21 +181,21 @@ function finishCycle() {
         // --- Acabou o DESCANSO ---
 
         if (currentRound >= TOTAL_ROUNDS) {
-            // Ciclo completo! Reseta tudo
+            soundCycleComplete();
             alert('🏆 Pomodoro completo! Todas as 4 rodadas finalizadas!');
 
             isWorkMode = true;
             currentRound = 1;
             timeRemaining = workDuration;
             timerConfig.classList.remove('hidden');
-            updateStatus('☕ Livre');
+            updateStatus('☕ Live');
 
         } else {
             // Próxima rodada
             currentRound++;
             isWorkMode = true;
             timeRemaining = workDuration;
-            updateStatus('☕ Livre');
+            updateStatus('☕ Live');
             timerConfig.classList.remove('hidden');
         }
     }
@@ -229,4 +229,4 @@ workMinutesInput.addEventListener('change', function () {
 
 updateDisplay();
 updateRoundDisplay();
-updateStatus('☕ Livre');
+updateStatus('☕ Live');

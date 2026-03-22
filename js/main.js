@@ -14,7 +14,8 @@ const btnPlay = document.getElementById('btn-play');
 // Ao clicar "Jogar", esconde a tela inicial e mostra o jogo
 
 btnPlay.addEventListener('click', function () {
-    // Esconde a tela inicial
+    soundPlay();
+
     startScreen.classList.add('hidden');
 
     // Mostra o jogo com animação de fade in
