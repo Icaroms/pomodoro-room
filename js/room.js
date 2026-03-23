@@ -48,10 +48,10 @@ var ZONE_MAP = [
 // ============================================
 
 var ITEM_DEFS = {
-    bed:      { zone: ZONE_FLOOR, sprite: 'Cama_Default' },
-    desk:     { zone: ZONE_FLOOR, sprite: 'Mesa_Default' },
-    chair:    { zone: ZONE_FLOOR, sprite: 'Cadeira_Default' },
-    computer: { zone: ZONE_FLOOR, sprite: 'Computador_Default' },
+    bed:      { zone: ZONE_FLOOR, sprite: 'Cama_Default',        fallback: { bg: '#c0392b', label: 'CA' } },
+    desk:     { zone: ZONE_FLOOR, sprite: 'Mesa_Default',         fallback: { bg: '#8e6d47', label: 'ME' } },
+    chair:    { zone: ZONE_FLOOR, sprite: 'Cadeira_Default',      fallback: { bg: '#a0522d', label: 'CD' } },
+    computer: { zone: ZONE_FLOOR, sprite: 'Computador_Default',   fallback: { bg: '#2c3e50', label: 'PC' } },
     lamp:     { zone: ZONE_WALL,  sprite: null, fallback: { bg: '#f1c40f', label: 'LU' } },
     plant:    { zone: ZONE_FLOOR, sprite: null, fallback: { bg: '#27ae60', label: 'PL' } },
     poster:   { zone: ZONE_WALL,  sprite: null, fallback: { bg: '#3498db', label: 'PO' } },
@@ -75,13 +75,19 @@ var DEFAULT_POSITIONS = {
 
 var itemPositions = loadData('itemPositions') || {};
 
-/** Garante que todo item visível tenha uma posição definida */
+/** Garante que todo item visível tenha uma posição válida */
 function ensurePositions() {
     DEFAULT_ITEMS.concat(shopItems).forEach(function (id) {
-        if (!itemPositions[id] && DEFAULT_POSITIONS[id]) {
-            itemPositions[id] = { col: DEFAULT_POSITIONS[id].col, row: DEFAULT_POSITIONS[id].row };
+        var pos = itemPositions[id];
+        var def = DEFAULT_POSITIONS[id];
+        if (!def) return;
+
+        // Se não tem posição salva, ou a posição está fora da grid → reseta
+        if (!pos || pos.col >= GRID_COLS || pos.row >= GRID_ROWS || pos.col < 0 || pos.row < 0) {
+            itemPositions[id] = { col: def.col, row: def.row };
         }
     });
+    saveData('itemPositions', itemPositions);
 }
 
 /** Ordem de desenho: itens de fundo primeiro, frente por último */
