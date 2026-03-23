@@ -1,53 +1,57 @@
 # 🍅 Pomodoro Room
 
-Jogo de produtividade em pixel art. Use a técnica Pomodoro para ganhar moedas e decorar seu quarto.
+Jogo de produtividade em pixel art. Técnica Pomodoro integrada com gamificação — complete ciclos de foco, ganhe moedas e decore o quarto.
 
 ## Gameplay
 
-- Defina o tempo de foco e inicie o timer
-- 4 rodadas por ciclo (3 pausas de 5min + 1 de 15min)
+- Timer Pomodoro com tempo configurável e 4 rodadas por ciclo
+- Rodadas 1-3: descanso de 5min | Rodada 4: descanso de 15min
 - +10 moedas por rodada completa
-- Gaste moedas na loja para decorar o quarto
-- Arraste móveis para reorganizar
-- Mova o personagem com WASD / setas / D-pad
+- Loja de decorações com moedas acumuladas
+- Drag and drop para reorganizar móveis com validação de zona
+- Personagem controlável (WASD / setas / D-pad)
 
 ## Stack
 
-- HTML5 Canvas
-- CSS3
-- JavaScript (vanilla)
-- Web Audio API (efeitos sonoros 8-bit)
-- localStorage (persistência)
-- Piskel (sprites)
+HTML5 Canvas · CSS3 · JavaScript vanilla · Web Audio API · localStorage · Aseprite
 
-## Estrutura
+## Arquitetura
 
 ```
-├── index.html
-├── css/style.css
-├── js/
-│   ├── storage.js    → localStorage
-│   ├── sound.js      → áudio 8-bit
-│   ├── coins.js      → sistema de moedas
-│   ├── timer.js      → pomodoro 4 rodadas
-│   ├── shop.js       → loja
-│   ├── room.js       → canvas, personagem, drag and drop
-│   └── main.js       → inicialização
-└── assets/sprites/   → pixel art 32x32
+js/
+├── storage.js  → Persistência via localStorage (JSON)
+├── sound.js    → Efeitos 8-bit via Web Audio API (osciladores)
+├── coins.js    → Sistema de moedas (ganho/gasto/saldo)
+├── timer.js    → Pomodoro 4 rodadas + integração com estados
+├── shop.js     → Catálogo, compra, renderização dinâmica
+├── room.js     → Canvas, grid, colisão, personagem, drag and drop
+└── main.js     → Tela inicial e inicialização
 ```
 
-## Mecânicas
+Ordem de carregamento: `storage → sound → coins → timer → shop → room → main`
 
-| Ação | Comportamento |
-|---|---|
-| Foco ativo | Personagem senta no PC (Work sprites sobrepostos) |
-| Dormir | Personagem deita na cama (Sleep sprite sobreposto) |
-| Dormindo | Bloqueia todas as ações até acordar |
-| Sem luminária | Quarto escuro (overlay de sombra) |
-| Drag and drop | Valida zona (chão/parede) e anti-sobreposição |
+## Colisão e zonas
 
-## Próximos passos
+Grid 4×5 sobre canvas 528×656 (room 132×164 em escala 4×).
 
-- Sprites dos itens da loja
-- Ajuste do D-pad mobile
-- Botões com sprites pixel art
+| Zona | Rows | Aceita |
+|---|---|---|
+| Bloqueada (teto) | 0 | Nada |
+| Parede | 1 | Quadros, luminária |
+| Chão | 2-4 | Móveis, personagem |
+
+Anti-sobreposição entre itens. Exceção: computador sobre mesa. Personagem colide com móveis.
+
+## Estados do personagem
+
+| Estado | Trigger | Comportamento |
+|---|---|---|
+| Idle | Padrão | Movimenta, arrasta itens |
+| Focado | Timer iniciado | Sprite de trabalho sobreposto no PC/cadeira |
+| Dormindo | Botão dormir | Sprite de sono sobreposto na cama, bloqueia ações |
+
+## Sprites
+
+Todos em 32×32px, fundo transparente, escala 4× no canvas via `imageSmoothingEnabled = false`.
+
+Personagem: 4 idle + 12 walk frames (3 por direção, ciclo ping-pong) + sleep + work (2 partes).

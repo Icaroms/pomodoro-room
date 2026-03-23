@@ -1,23 +1,27 @@
-// ============================================
-// SHOP.JS — Loja de Melhorias e Decorações
-// ============================================
-// Depende de: storage.js, coins.js, room.js
+/**
+ * SHOP.JS — Loja de melhorias e decorações
+ * 
+ * Vende apenas itens extras. Móveis básicos (cama, mesa, cadeira, PC)
+ * já vêm no quarto por padrão.
+ * 
+ * Depende de: storage.js, coins.js, sound.js, room.js
+ */
 
-
-const SHOP_CATALOG = [
-    { id: 'lamp',     name: 'Luminária',   price: 15, sprite: 'assets/sprites/lamp.png',     owned: false },
-    { id: 'plant',    name: 'Planta',      price: 20, sprite: 'assets/sprites/plant.png',    owned: false },
-    { id: 'poster',   name: 'Pôster',      price: 15, sprite: 'assets/sprites/poster.png',   owned: false },
-    { id: 'rug',      name: 'Tapete',      price: 30, sprite: 'assets/sprites/rug.png',      owned: false },
-    { id: 'shelf',    name: 'Estante',     price: 40, sprite: 'assets/sprites/shelf.png',    owned: false },
+var SHOP_CATALOG = [
+    { id: 'lamp',   name: 'Luminária', price: 15, sprite: 'assets/sprites/lamp.png',   owned: false },
+    { id: 'plant',  name: 'Planta',    price: 20, sprite: 'assets/sprites/plant.png',  owned: false },
+    { id: 'poster', name: 'Pôster',    price: 15, sprite: 'assets/sprites/poster.png', owned: false },
+    { id: 'rug',    name: 'Tapete',    price: 30, sprite: 'assets/sprites/rug.png',    owned: false },
+    { id: 'shelf',  name: 'Estante',   price: 40, sprite: 'assets/sprites/shelf.png',  owned: false },
 ];
 
-const shopItemsContainer = document.getElementById('shop-items');
-const shopPanel = document.getElementById('shop-panel');
-const gameCanvas = document.getElementById('game-canvas');
-const btnShop = document.getElementById('btn-shop');
-const btnRoom = document.getElementById('btn-room');
+var shopItemsContainer = document.getElementById('shop-items');
+var shopPanel = document.getElementById('shop-panel');
+var gameCanvas = document.getElementById('game-canvas');
+var btnShop = document.getElementById('btn-shop');
+var btnRoom = document.getElementById('btn-room');
 
+/** Marca itens já comprados em sessões anteriores */
 function loadPurchasedItems() {
     var purchased = loadData('purchasedItems');
     if (purchased === null) return;
@@ -26,6 +30,7 @@ function loadPurchasedItems() {
     });
 }
 
+/** Salva lista de ids comprados no localStorage */
 function savePurchasedItems() {
     var ids = SHOP_CATALOG
         .filter(function (item) { return item.owned; })
@@ -33,6 +38,7 @@ function savePurchasedItems() {
     saveData('purchasedItems', ids);
 }
 
+/** Gera os cards de cada item dinamicamente no HTML */
 function renderShop() {
     shopItemsContainer.innerHTML = '';
 
@@ -42,11 +48,10 @@ function renderShop() {
 
         var buttonHTML = item.owned
             ? '<span class="purchased-label">✅ Comprado</span>'
-            : '<button class="buy-btn">Comprar</button>';
+            : '<button class="buy-btn">🛒 Comprar</button>';
 
         var hint = item.id === 'lamp'
-            ? '<span class="item-hint">💡 Ilumina o quarto!</span>'
-            : '';
+            ? '<span class="item-hint">💡 Ilumina o quarto!</span>' : '';
 
         div.innerHTML =
             '<div class="item-icon-wrapper">' +
@@ -58,12 +63,10 @@ function renderShop() {
             '</div>' +
             '<span class="item-name">' + item.name + '</span>' +
             '<span class="item-price">🪙 ' + item.price + '</span>' +
-            hint +
-            buttonHTML;
+            hint + buttonHTML;
 
         if (!item.owned) {
-            var buyBtn = div.querySelector('.buy-btn');
-            buyBtn.addEventListener('click', function () {
+            div.querySelector('.buy-btn').addEventListener('click', function () {
                 purchaseItem(item);
             });
         }
@@ -72,6 +75,7 @@ function renderShop() {
     });
 }
 
+/** Tenta comprar o item. Valida saldo via spendCoins() */
 function purchaseItem(item) {
     if (spendCoins(item.price)) {
         item.owned = true;
@@ -79,7 +83,6 @@ function purchaseItem(item) {
         renderShop();
         addItemToRoom(item);
         soundPurchase();
-
         if (item.id === 'lamp') {
             alert('Você comprou: ' + item.name + '! O quarto se iluminou! 💡');
         } else {
@@ -90,6 +93,8 @@ function purchaseItem(item) {
         alert('Moedas insuficientes!');
     }
 }
+
+// --- Navegação Quarto ↔ Loja ---
 
 btnShop.addEventListener('click', function () {
     if (isSleeping()) { alert('💤 Acorde primeiro!'); return; }
@@ -106,5 +111,6 @@ btnRoom.addEventListener('click', function () {
     btnShop.classList.remove('active');
 });
 
+// --- Inicialização ---
 loadPurchasedItems();
 renderShop();
