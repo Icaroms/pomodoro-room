@@ -8,7 +8,7 @@
  * - Rodada 4: descanso longo (15 min), encerra o ciclo
  * - Cada rodada concluída = 10 moedas
  * 
- * Status: ☕ Livre | 🔥 Focado | 🌿 Descansando
+ * Status: ☕ Live | 🔥 Focado | 🌿 Descansando
  * 
  * Depende de: coins.js, sound.js, room.js (startWorking/stopWorking)
  */
@@ -17,6 +17,7 @@ var SHORT_BREAK = 5 * 60;
 var LONG_BREAK = 15 * 60;
 var TOTAL_ROUNDS = 4;
 var COINS_REWARD = 10;
+var MIN_WORK_FOR_COINS = 25 * 60; // Mínimo 25min pra ganhar moedas
 
 var workDuration = 25 * 60;
 var timeRemaining = workDuration;
@@ -102,7 +103,7 @@ function resetTimer() {
     timerConfig.classList.remove('hidden');
     updateDisplay();
     updateRoundDisplay();
-    updateStatus('☕ Livre');
+    updateStatus('☕ Live');
     updateButtons();
     stopWorking();
 }
@@ -115,21 +116,29 @@ function finishCycle() {
     stopWorking();
 
     if (isWorkMode) {
-        // Rodada de foco concluída
-        addCoins(COINS_REWARD);
-        soundCoins();
+        // Só ganha moedas se o tempo de foco foi >= 25 minutos
+        var earnedCoins = workDuration >= MIN_WORK_FOR_COINS;
+
+        if (earnedCoins) {
+            addCoins(COINS_REWARD);
+            soundCoins();
+        }
 
         if (currentRound >= TOTAL_ROUNDS) {
-            // Última rodada → descanso longo
             soundComplete();
-            alert('🎉 Rodada ' + currentRound + ' completa! +' + COINS_REWARD + ' moedas!\nDescanso longo de 15 minutos.');
+            var msg = '🎉 Rodada ' + currentRound + ' completa!';
+            msg += earnedCoins ? ' +' + COINS_REWARD + ' moedas!' : ' (sem moedas — mínimo 25min)';
+            msg += '\nDescanso longo de 15 minutos.';
+            alert(msg);
             isWorkMode = false;
             timeRemaining = LONG_BREAK;
             updateStatus('🌿 Descansando (longo)');
         } else {
-            // Rodadas 1-3 → descanso curto
             soundComplete();
-            alert('✅ Rodada ' + currentRound + ' completa! +' + COINS_REWARD + ' moedas!\nDescanso de 5 minutos.');
+            var msg2 = '✅ Rodada ' + currentRound + ' completa!';
+            msg2 += earnedCoins ? ' +' + COINS_REWARD + ' moedas!' : ' (sem moedas — mínimo 25min)';
+            msg2 += '\nDescanso de 5 minutos.';
+            alert(msg2);
             isWorkMode = false;
             timeRemaining = SHORT_BREAK;
             updateStatus('🌿 Descansando');
@@ -144,13 +153,13 @@ function finishCycle() {
             currentRound = 1;
             timeRemaining = workDuration;
             timerConfig.classList.remove('hidden');
-            updateStatus('☕ Livre');
+            updateStatus('☕ Live');
         } else {
             // Próxima rodada
             currentRound++;
             isWorkMode = true;
             timeRemaining = workDuration;
-            updateStatus('☕ Livre');
+            updateStatus('☕ Live');
             timerConfig.classList.remove('hidden');
         }
     }
@@ -179,4 +188,4 @@ workMinutesInput.addEventListener('change', function () {
 // --- Inicialização ---
 updateDisplay();
 updateRoundDisplay();
-updateStatus('☕ Livre');
+updateStatus('☕ Live');
