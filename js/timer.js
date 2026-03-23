@@ -97,6 +97,7 @@ function startTimer() {
     updateButtons();
     updateStatus(isWorkMode ? '🔥 Focado' : '🌿 Descansando');
     soundStart();
+    if (isWorkMode) startWorking();
 
     intervalId = setInterval(function () {
         timeRemaining--;
@@ -118,6 +119,7 @@ function pauseTimer() {
     updateButtons();
     btnStart.disabled = false;
     soundPause();
+    stopWorking();
 }
 
 
@@ -146,6 +148,7 @@ function resetTimer() {
     updateRoundDisplay();
     updateStatus('☕ Live');
     updateButtons();
+    stopWorking();
 }
 
 
@@ -155,6 +158,7 @@ function finishCycle() {
     clearInterval(intervalId);
     intervalId = null;
     isRunning = false;
+    stopWorking();
 
     if (isWorkMode) {
         addCoins(COINS_REWARD);

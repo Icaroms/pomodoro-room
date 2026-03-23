@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pomodoro Room</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍅</text></svg>">
     <link rel="stylesheet" href="css/style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
@@ -11,10 +12,7 @@
 
 <body>
 
-    <!-- ============================================
-         TELA INICIAL
-         Aparece ao abrir o jogo. Esconde ao clicar "Jogar".
-         ============================================ -->
+    <!-- TELA INICIAL -->
     <div id="start-screen">
         <div id="start-content">
             <div id="start-icon">🍅</div>
@@ -41,12 +39,12 @@
             </div>
         </header>
 
-        <!-- CANVAS -->
-        <canvas id="game-canvas" width="600" height="600">
+        <!-- CANVAS (132×164 scaled 4x = 528×656) -->
+        <canvas id="game-canvas" width="528" height="656">
             Seu navegador não suporta Canvas.
         </canvas>
 
-        <!-- D-PAD (controle mobile) -->
+        <!-- D-PAD -->
         <div id="dpad">
             <button id="dpad-up" class="dpad-btn" data-dir="up">▲</button>
             <div id="dpad-middle">
@@ -59,29 +57,24 @@
 
         <!-- TIMER POMODORO -->
         <section id="timer-panel">
-
-            <!-- Configuração do tempo (aparece quando não está rodando) -->
             <div id="timer-config">
                 <label for="work-minutes">Foco (min):</label>
                 <input type="number" id="work-minutes" min="1" max="120" value="25">
             </div>
-
-            <!-- Display do tempo -->
             <div id="timer-display">25:00</div>
-
-            <!-- Rodada atual -->
             <div id="round-display">Rodada: 1 / 4</div>
-
-            <!-- Botões -->
             <div id="timer-controls">
                 <button id="btn-start">Iniciar</button>
                 <button id="btn-pause" disabled>Pausar</button>
                 <button id="btn-reset">Resetar</button>
             </div>
-
-            <!-- Status: Live / Focado / Descansando -->
             <div id="timer-status">☕ Live</div>
         </section>
+
+        <!-- AÇÕES DO PERSONAGEM -->
+        <div id="player-actions">
+            <button id="btn-sleep">💤 Dormir</button>
+        </div>
 
         <!-- LOJA -->
         <section id="shop-panel" class="hidden">
@@ -92,6 +85,7 @@
         <!-- NAVEGAÇÃO -->
         <nav id="game-nav">
             <button id="btn-room" class="active">Quarto</button>
+            <button id="btn-sleep">Dormir 💤</button>
             <button id="btn-shop">Loja</button>
         </nav>
 

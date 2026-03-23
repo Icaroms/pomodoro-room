@@ -1,149 +1,124 @@
 // ============================================
-// ROOM.JS — Renderização do Quarto no Canvas
+// ROOM.JS — Renderização do Quarto
 // ============================================
-// Depende de: storage.js
+// Room: 132x164 → Canvas: 528x656 (escala 4x)
+// Grid interna: 4 colunas x 5 linhas (32x32 cada)
+// Borda: 2px original = 8px no canvas
 
-
-const canvas = document.getElementById('game-canvas');
-const ctx = canvas.getContext('2d');
+var canvas = document.getElementById('game-canvas');
+var ctx = canvas.getContext('2d');
 ctx.imageSmoothingEnabled = false;
 
-const TILE_SIZE = 100;
-const GRID_COLS = canvas.width / TILE_SIZE;   // 6
-const GRID_ROWS = canvas.height / TILE_SIZE;  // 6
+var SCALE = 4;
+var ROOM_W = 132;
+var ROOM_H = 164;
+var BORDER = 2 * SCALE; // 8px
+var TILE_ORIG = 32;
+var TILE = TILE_ORIG * SCALE; // 128px no canvas
+var GRID_COLS = 4;
+var GRID_ROWS = 5;
 
+// Offset da grid dentro do canvas (após bordas)
+var GRID_OFFSET_X = BORDER;
+var GRID_OFFSET_Y = BORDER;
 
 // ============================================
 // ZONAS DE COLISÃO
 // ============================================
-// green  = chão (móveis: cama, mesa, cadeira, etc.)
-// yellow = parede (quadros, janelas)
-// orange = canto parede (lâmpadas)
+var ZONE_BLOCKED = 'blocked';
+var ZONE_WALL    = 'wall';
+var ZONE_FLOOR   = 'floor';
 
-const ZONE_FLOOR  = 'floor';
-const ZONE_WALL   = 'wall';
-const ZONE_LAMP   = 'lamp';
-
-// Mapa de zonas por célula [row][col]
-const ZONE_MAP = [];
-for (let r = 0; r < GRID_ROWS; r++) {
-    ZONE_MAP[r] = [];
-    for (let c = 0; c < GRID_COLS; c++) {
-        if (r === 0) {
-            // Primeira linha = parede
-            if (c === 0 || c === GRID_COLS - 1) {
-                ZONE_MAP[r][c] = ZONE_LAMP;   // cantos = lâmpadas
-            } else {
-                ZONE_MAP[r][c] = ZONE_WALL;   // centro = quadros
-            }
-        } else {
-            ZONE_MAP[r][c] = ZONE_FLOOR;      // resto = chão
-        }
-    }
-}
-
+// row 0 = bloqueado (teto/borda vermelha superior)
+// row 1 = parede amarela (quadros, janelas) + blocos vermelhos na base
+// rows 2-4 = chão verde (móveis)
+var ZONE_MAP = [
+    [ZONE_BLOCKED, ZONE_BLOCKED, ZONE_BLOCKED, ZONE_BLOCKED],
+    [ZONE_WALL,    ZONE_WALL,    ZONE_WALL,    ZONE_WALL],
+    [ZONE_FLOOR,   ZONE_FLOOR,   ZONE_FLOOR,   ZONE_FLOOR],
+    [ZONE_FLOOR,   ZONE_FLOOR,   ZONE_FLOOR,   ZONE_FLOOR],
+    [ZONE_FLOOR,   ZONE_FLOOR,   ZONE_FLOOR,   ZONE_FLOOR],
+];
 
 // ============================================
-// DEFINIÇÃO DOS ITENS
+// ITENS
 // ============================================
-
-const ITEM_DEFS = {
-    bed:      { tilesW: 1, tilesH: 2, zone: ZONE_FLOOR, spriteLit: 'cama_luz',       spriteDark: 'cama_escuro',       fallback: { bg: '#c0392b', label: 'CA' } },
-    desk:     { tilesW: 2, tilesH: 1, zone: ZONE_FLOOR, spriteLit: 'mesa_luz',       spriteDark: 'mesa_escuro',       fallback: { bg: '#8e6d47', label: 'ME' } },
-    chair:    { tilesW: 1, tilesH: 1, zone: ZONE_FLOOR, spriteLit: 'cadeira_luz',    spriteDark: 'cadeira_escuro',    fallback: { bg: '#a0522d', label: 'CD' } },
-    computer: { tilesW: 1, tilesH: 1, zone: ZONE_FLOOR, spriteLit: 'computador_luz', spriteDark: 'computador_escuro', fallback: { bg: '#2c3e50', label: 'PC' } },
-    lamp:     { tilesW: 1, tilesH: 1, zone: ZONE_LAMP,  spriteLit: null,             spriteDark: null,                fallback: { bg: '#f1c40f', label: 'LU' } },
-    plant:    { tilesW: 1, tilesH: 1, zone: ZONE_FLOOR, spriteLit: null,             spriteDark: null,                fallback: { bg: '#27ae60', label: 'PL' } },
-    shelf:    { tilesW: 2, tilesH: 1, zone: ZONE_FLOOR, spriteLit: null,             spriteDark: null,                fallback: { bg: '#8e44ad', label: 'ES' } },
-    rug:      { tilesW: 2, tilesH: 2, zone: ZONE_FLOOR, spriteLit: null,             spriteDark: null,                fallback: { bg: '#e67e22', label: 'TA' } },
-    poster:   { tilesW: 1, tilesH: 1, zone: ZONE_WALL,  spriteLit: null,             spriteDark: null,                fallback: { bg: '#3498db', label: 'PO' } },
+var ITEM_DEFS = {
+    bed:      { zone: ZONE_FLOOR, sprite: 'Cama_Default' },
+    desk:     { zone: ZONE_FLOOR, sprite: 'Mesa_Default' },
+    chair:    { zone: ZONE_FLOOR, sprite: 'Cadeira_Default' },
+    computer: { zone: ZONE_FLOOR, sprite: 'Computador_Default' },
+    lamp:     { zone: ZONE_WALL,  sprite: null, fallback: { bg: '#f1c40f', label: 'LU' } },
+    plant:    { zone: ZONE_FLOOR, sprite: null, fallback: { bg: '#27ae60', label: 'PL' } },
+    poster:   { zone: ZONE_WALL,  sprite: null, fallback: { bg: '#3498db', label: 'PO' } },
+    rug:      { zone: ZONE_FLOOR, sprite: null, fallback: { bg: '#e67e22', label: 'TA' } },
+    shelf:    { zone: ZONE_FLOOR, sprite: null, fallback: { bg: '#8e44ad', label: 'ES' } },
 };
 
-// Itens padrão (sempre presentes)
-const DEFAULT_ITEMS = ['bed', 'desk', 'chair', 'computer'];
+var DEFAULT_ITEMS = ['bed', 'desk', 'chair', 'computer'];
+var shopItems = loadData('roomItems') || [];
 
-// Itens comprados na loja
-let shopItems = loadData('roomItems') || [];
-
-// Posições padrão (agrupamento lógico)
-const DEFAULT_POSITIONS = {
-    bed:      { col: 0, row: 1 },
-    desk:     { col: 3, row: 1 },   // 2 cells wide → ocupa col 3-4
-    chair:    { col: 4, row: 2 },   // embaixo da mesa à direita
-    computer: { col: 3, row: 1 },   // em cima da mesa (mesma posição, desenhado por cima)
-    lamp:     { col: 5, row: 0 },   // canto da parede (zona laranja)
-    plant:    { col: 0, row: 5 },
-    shelf:    { col: 1, row: 1 },
-    rug:      { col: 2, row: 3 },
-    poster:   { col: 2, row: 0 },   // na parede (zona amarela)
+var DEFAULT_POSITIONS = {
+    bed:      { col: 0, row: 2 },
+    desk:     { col: 2, row: 2 },
+    chair:    { col: 2, row: 3 },
+    computer: { col: 3, row: 2 },
+    lamp:     { col: 0, row: 1 },
+    plant:    { col: 0, row: 4 },
+    poster:   { col: 1, row: 1 },
+    rug:      { col: 1, row: 3 },
+    shelf:    { col: 3, row: 3 },
 };
 
-let itemPositions = loadData('itemPositions') || {};
+var itemPositions = loadData('itemPositions') || {};
 
 function ensurePositions() {
     var allItems = DEFAULT_ITEMS.concat(shopItems);
     allItems.forEach(function (id) {
         if (!itemPositions[id] && DEFAULT_POSITIONS[id]) {
-            itemPositions[id] = {
-                col: DEFAULT_POSITIONS[id].col,
-                row: DEFAULT_POSITIONS[id].row,
-            };
+            itemPositions[id] = { col: DEFAULT_POSITIONS[id].col, row: DEFAULT_POSITIONS[id].row };
         }
     });
 }
 
-// Ordem de desenho (itens de fundo primeiro)
-const DRAW_ORDER = ['rug', 'bed', 'desk', 'computer', 'shelf', 'chair', 'plant', 'lamp', 'poster'];
-
+var DRAW_ORDER = ['rug', 'bed', 'desk', 'computer', 'shelf', 'chair', 'plant', 'lamp', 'poster'];
 
 // ============================================
-// PERSONAGEM COM ANIMAÇÃO
+// PERSONAGEM
 // ============================================
-
-const player = {
-    col: 3,
-    row: 3,
-    size: 48,
+var player = {
+    col: 1, row: 3,
     direction: 'down',
     walking: false,
     walkFrame: 0,
+    state: 'idle', // idle, walking, sleeping, working
 };
 
-const savedPlayer = loadData('playerPosition');
-if (savedPlayer) {
-    player.col = savedPlayer.col;
-    player.row = savedPlayer.row;
-}
+var savedPlayer = loadData('playerPosition');
+if (savedPlayer) { player.col = savedPlayer.col; player.row = savedPlayer.row; }
 
-let playerAnimating = false;
-let playerPixelX = player.col * TILE_SIZE + (TILE_SIZE - player.size) / 2;
-let playerPixelY = player.row * TILE_SIZE + (TILE_SIZE - player.size) / 2;
-let playerTargetX = playerPixelX;
-let playerTargetY = playerPixelY;
-const PLAYER_SPEED = 6;
+var playerAnimating = false;
+var playerPixelX = GRID_OFFSET_X + player.col * TILE + (TILE - TILE_ORIG * SCALE) / 2;
+var playerPixelY = GRID_OFFSET_Y + player.row * TILE + (TILE - TILE_ORIG * SCALE) / 2;
+var playerTargetX = playerPixelX;
+var playerTargetY = playerPixelY;
+var PLAYER_SPEED = 8;
+var walkAnimTimer = null;
 
-// Mapeamento de sprites do personagem por direção e estado
-const PLAYER_SPRITES = {
-    idle: {
-        down:  'Idle',
-        up:    'Idle_Back',
-        left:  'Idle_Side_Left',
-        right: 'Idle_Side_Right',
-    },
+var PLAYER_SPRITES = {
+    idle: { down: 'Front_Walk_1', up: 'Back_Stand', left: 'Side_Left', right: 'Side_Right' },
     walk: {
-        down:  ['Front_Walk_1', 'Front_Walk_2'],
-        up:    ['Back_Walk_1', 'Back_Walk_2'],
-        left:  ['Side_Left_Walk_1', 'Side_Left_Walk_2'],
-        right: ['Side_Right_Walk_1', 'Side_Right_Walk_2'],
+        down:  ['Front_Walk_1', 'Front_Walk_2', 'Front_Walk_3'],
+        up:    ['Back_Stand', 'Back_Walk_2', 'Back_Walk_3'],
+        left:  ['Side_Left_Walk_1', 'Side_Left_Walk_2', 'Side_Left_Walk_3'],
+        right: ['Side_Right_Walk_1', 'Side_Right_Walk_2', 'Side_Right_Walk_3'],
     },
 };
 
-
 // ============================================
-// CARREGAMENTO DE SPRITES
+// SPRITES
 // ============================================
-
-const sprites = {};
+var sprites = {};
 
 function loadImage(name, path) {
     return new Promise(function (resolve) {
@@ -156,118 +131,102 @@ function loadImage(name, path) {
 
 function loadAllSprites() {
     var list = [
-        // Cenário
-        { name: 'room_bg',     path: 'assets/sprites/room_bg.png' },
-        { name: 'room_bg_alt', path: 'assets/sprites/room_bg_alt.png' },
-
-        // Itens (versão luz)
-        { name: 'cama_luz',         path: 'assets/sprites/Cama_Padrao_Com_Luz.png' },
-        { name: 'cama_escuro',      path: 'assets/sprites/Cama_Padrao_Sem_Luz.png' },
-        { name: 'mesa_luz',         path: 'assets/sprites/Mesa_Padrao_Com_Luz.png' },
-        { name: 'mesa_escuro',      path: 'assets/sprites/Mesa_Padrao_Sem_Luz.png' },
-        { name: 'cadeira_luz',      path: 'assets/sprites/Cadeira_Padrao_Com_Luz.png' },
-        { name: 'cadeira_escuro',   path: 'assets/sprites/Cadeira_Padrao_Sem_Luz.png' },
-        { name: 'computador_luz',   path: 'assets/sprites/Computador_Padrao_Com_Luz.png' },
-        { name: 'computador_escuro', path: 'assets/sprites/Computador_Padrao_Sem_Luz.png' },
-
-        // Personagem
-        { name: 'Idle',              path: 'assets/sprites/Idle.png' },
-        { name: 'Idle_Back',         path: 'assets/sprites/Idle_Back.png' },
-        { name: 'Idle_Side_Left',    path: 'assets/sprites/Idle_Side_Left.png' },
-        { name: 'Idle_Side_Right',   path: 'assets/sprites/Idle_Side_Right.png' },
-        { name: 'Front_Walk_1',      path: 'assets/sprites/Front_Walk_1.png' },
-        { name: 'Front_Walk_2',      path: 'assets/sprites/Front_Walk_2.png' },
-        { name: 'Back_Walk_1',       path: 'assets/sprites/Back_Walk_1.png' },
-        { name: 'Back_Walk_2',       path: 'assets/sprites/Back_Walk_2.png' },
-        { name: 'Side_Left_Walk_1',  path: 'assets/sprites/Side_Left_Walk_1.png' },
-        { name: 'Side_Left_Walk_2',  path: 'assets/sprites/Side_Left_Walk_2.png' },
-        { name: 'Side_Right_Walk_1', path: 'assets/sprites/Side_Right_Walk_1.png' },
-        { name: 'Side_Right_Walk_2', path: 'assets/sprites/Side_Right_Walk_2.png' },
+        { name: 'room_bg', path: 'assets/sprites/Quarto_Default.png' },
+        // Items
+        { name: 'Cama_Default',        path: 'assets/sprites/Cama_Default.png' },
+        { name: 'Mesa_Default',         path: 'assets/sprites/Mesa_Default.png' },
+        { name: 'Cadeira_Default',      path: 'assets/sprites/Cadeira_Default.png' },
+        { name: 'Computador_Default',   path: 'assets/sprites/Computador_Default.png' },
+        // Player idle/walk
+        { name: 'Front_Walk_1',         path: 'assets/sprites/Front_Walk_1.png' },
+        { name: 'Front_Walk_2',         path: 'assets/sprites/Front_Walk_2.png' },
+        { name: 'Front_Walk_3',         path: 'assets/sprites/Front_Walk_3.png' },
+        { name: 'Back_Stand',           path: 'assets/sprites/Back_Stand.png' },
+        { name: 'Back_Walk_2',          path: 'assets/sprites/Back_Walk_2.png' },
+        { name: 'Back_Walk_3',          path: 'assets/sprites/Back_Walk_3.png' },
+        { name: 'Side_Left',            path: 'assets/sprites/Side_Left.png' },
+        { name: 'Side_Left_Walk_1',     path: 'assets/sprites/Side_Left_Walk_1.png' },
+        { name: 'Side_Left_Walk_2',     path: 'assets/sprites/Side_Left_Walk_2.png' },
+        { name: 'Side_Left_Walk_3',     path: 'assets/sprites/Side_Left_Walk_3.png' },
+        { name: 'Side_Right',           path: 'assets/sprites/Side_Right.png' },
+        { name: 'Side_Right_Walk_1',    path: 'assets/sprites/Side_Right_Walk_1.png' },
+        { name: 'Side_Right_Walk_2',    path: 'assets/sprites/Side_Right_Walk_2.png' },
+        { name: 'Side_Right_Walk_3',    path: 'assets/sprites/Side_Right_Walk_3.png' },
+        // Special states
+        { name: 'Sleep_Sprite',         path: 'assets/sprites/Sleep_Sprite.png' },
+        { name: 'Work_Parte_1',         path: 'assets/sprites/Work_Parte_1.png' },
+        { name: 'Work_Parte_2',         path: 'assets/sprites/Work_Parte_2.png' },
     ];
-
-    return Promise.all(list.map(function (s) {
-        return loadImage(s.name, s.path);
-    }));
+    return Promise.all(list.map(function (s) { return loadImage(s.name, s.path); }));
 }
-
 
 // ============================================
 // ILUMINAÇÃO
 // ============================================
+function isLightOn() { return shopItems.includes('lamp'); }
 
-function isLightOn() {
-    return shopItems.includes('lamp');
-}
-
+// ============================================
+// CONVERSÃO GRID → PIXELS
+// ============================================
+function gridToPixelX(col) { return GRID_OFFSET_X + col * TILE; }
+function gridToPixelY(row) { return GRID_OFFSET_Y + row * TILE; }
 
 // ============================================
 // DESENHO
 // ============================================
-
 function drawBackground() {
-    var bg = isLightOn() ? sprites['room_bg'] : sprites['room_bg_alt'];
+    var bg = sprites['room_bg'];
     if (bg) {
         ctx.drawImage(bg, 0, 0, canvas.width, canvas.height);
     } else {
-        ctx.fillStyle = isLightOn() ? '#6b5030' : '#3a2040';
+        ctx.fillStyle = '#4a3020';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+    if (!isLightOn()) {
+        ctx.fillStyle = 'rgba(20, 10, 40, 0.45)';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
     }
 }
 
-function drawItem(itemId, pixelX, pixelY) {
+function drawItem(itemId, px, py) {
     var def = ITEM_DEFS[itemId];
     if (!def) return;
-
     var pos = itemPositions[itemId];
-    if (!pos && pixelX === undefined) return;
+    if (!pos && px === undefined) return;
 
-    var drawW = def.tilesW * TILE_SIZE;
-    var drawH = def.tilesH * TILE_SIZE;
-    var x = (pixelX !== undefined) ? pixelX : pos.col * TILE_SIZE;
-    var y = (pixelY !== undefined) ? pixelY : pos.row * TILE_SIZE;
+    var x = (px !== undefined) ? px : gridToPixelX(pos.col);
+    var y = (py !== undefined) ? py : gridToPixelY(pos.row);
 
-    // Escolhe sprite luz ou escuro
-    var spriteName = isLightOn() ? def.spriteLit : def.spriteDark;
+    var spriteName = def.sprite;
     var sprite = spriteName ? sprites[spriteName] : null;
 
     if (sprite) {
-        ctx.drawImage(sprite, x, y, drawW, drawH);
-    } else {
-        // Fallback
+        ctx.drawImage(sprite, x, y, TILE, TILE);
+    } else if (def.fallback) {
         var fb = def.fallback;
-        var margin = 6;
-        ctx.fillStyle = '#00000044';
-        ctx.fillRect(x + margin + 2, y + margin + 2, drawW - margin * 2, drawH - margin * 2);
+        var m = 10;
+        ctx.fillStyle = '#00000033';
+        ctx.fillRect(x + m + 3, y + m + 3, TILE - m * 2, TILE - m * 2);
         ctx.fillStyle = fb.bg;
-        ctx.fillRect(x + margin, y + margin, drawW - margin * 2, drawH - margin * 2);
+        ctx.fillRect(x + m, y + m, TILE - m * 2, TILE - m * 2);
         ctx.strokeStyle = '#000';
         ctx.lineWidth = 2;
-        ctx.strokeRect(x + margin, y + margin, drawW - margin * 2, drawH - margin * 2);
+        ctx.strokeRect(x + m, y + m, TILE - m * 2, TILE - m * 2);
         ctx.fillStyle = '#fff';
-        ctx.font = '14px "Press Start 2P", monospace';
+        ctx.font = '16px "Press Start 2P", monospace';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(fb.label, x + drawW / 2, y + drawH / 2);
-    }
-
-    // Escurecimento sem luz
-    if (!isLightOn()) {
-        ctx.fillStyle = 'rgba(20, 10, 30, 0.15)';
-        ctx.fillRect(x, y, drawW, drawH);
+        ctx.fillText(fb.label, x + TILE / 2, y + TILE / 2);
     }
 }
 
 function drawPlayer() {
+    if (player.state === 'sleeping' || player.state === 'working') return;
+
     var x = playerPixelX;
     var y = playerPixelY;
-    var s = player.size;
-
-    // Escala do sprite no canvas
-    var drawSize = TILE_SIZE - 10;
-    var drawX = x - (drawSize - s) / 2;
-    var drawY = y - (drawSize - s) / 2;
-
     var spriteName;
+
     if (player.walking) {
         var frames = PLAYER_SPRITES.walk[player.direction];
         spriteName = frames[player.walkFrame % frames.length];
@@ -275,22 +234,39 @@ function drawPlayer() {
         spriteName = PLAYER_SPRITES.idle[player.direction];
     }
 
-    var sprite = sprites[spriteName];
-    if (sprite) {
-        ctx.drawImage(sprite, drawX, drawY, drawSize, drawSize);
+    var spr = sprites[spriteName];
+    if (spr) {
+        ctx.drawImage(spr, x, y, TILE, TILE);
     } else {
-        // Fallback simples
-        ctx.fillStyle = 'rgba(0,0,0,0.2)';
-        ctx.beginPath();
-        ctx.ellipse(x + s / 2, y + s - 2, s / 3, 6, 0, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillStyle = '#4a90d9';
-        ctx.fillRect(x + 8, y + 16, s - 16, s - 22);
         ctx.fillStyle = '#ff6b6b';
-        ctx.fillRect(x + 10, y + 2, s - 20, 18);
-        ctx.fillStyle = '#2c3e50';
-        ctx.fillRect(x + 10, y + s - 8, 8, 6);
-        ctx.fillRect(x + s - 18, y + s - 8, 8, 6);
+        ctx.fillRect(x + 30, y + 20, TILE - 60, TILE - 40);
+    }
+}
+
+// Sprites especiais: dormir e trabalhar
+function drawSleepSprite() {
+    if (player.state !== 'sleeping') return;
+    var bedPos = itemPositions['bed'];
+    if (!bedPos) return;
+    var spr = sprites['Sleep_Sprite'];
+    if (spr) {
+        ctx.drawImage(spr, gridToPixelX(bedPos.col), gridToPixelY(bedPos.row), TILE, TILE);
+    }
+}
+
+function drawWorkSprites() {
+    if (player.state !== 'working') return;
+    var compPos = itemPositions['computer'];
+    var chairPos = itemPositions['chair'];
+
+    var spr1 = sprites['Work_Parte_1'];
+    var spr2 = sprites['Work_Parte_2'];
+
+    if (spr1 && compPos) {
+        ctx.drawImage(spr1, gridToPixelX(compPos.col), gridToPixelY(compPos.row), TILE, TILE);
+    }
+    if (spr2 && chairPos) {
+        ctx.drawImage(spr2, gridToPixelX(chairPos.col), gridToPixelY(chairPos.row), TILE, TILE);
     }
 }
 
@@ -302,99 +278,75 @@ function drawRoom() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     drawBackground();
 
-    // Desenha itens na ordem definida (fundo → frente)
     var visible = getAllVisibleItems();
-    DRAW_ORDER.forEach(function (itemId) {
-        if (visible.includes(itemId) && itemId !== draggingItem) {
-            drawItem(itemId);
+
+    // Itens na ordem definida
+    DRAW_ORDER.forEach(function (id) {
+        if (visible.includes(id) && id !== draggingItem) {
+            // No modo trabalho, computador e cadeira são substituídos pelos work sprites
+            if (player.state === 'working' && (id === 'computer' || id === 'chair')) return;
+            // No modo dormir, cama é substituída pelo sleep sprite
+            if (player.state === 'sleeping' && id === 'bed') return;
+            drawItem(id);
         }
     });
-    // Itens não listados no DRAW_ORDER
-    visible.forEach(function (itemId) {
-        if (!DRAW_ORDER.includes(itemId) && itemId !== draggingItem) {
-            drawItem(itemId);
-        }
+    // Itens fora do DRAW_ORDER
+    visible.forEach(function (id) {
+        if (!DRAW_ORDER.includes(id) && id !== draggingItem) drawItem(id);
     });
 
+    // Sprites especiais
+    drawSleepSprite();
+    drawWorkSprites();
+
+    // Personagem (só se não está dormindo/trabalhando)
     drawPlayer();
 
-    // Item arrastado (por cima de tudo)
+    // Item arrastado por cima de tudo
     if (draggingItem) {
-        var def = ITEM_DEFS[draggingItem];
-        var snapCol = Math.round((dragX - (def.tilesW * TILE_SIZE) / 2) / TILE_SIZE);
-        var snapRow = Math.round((dragY - (def.tilesH * TILE_SIZE) / 2) / TILE_SIZE);
-        var cCol = Math.max(0, Math.min(snapCol, GRID_COLS - def.tilesW));
-        var cRow = Math.max(0, Math.min(snapRow, GRID_ROWS - def.tilesH));
+        var snapCol = Math.round((dragX - GRID_OFFSET_X - TILE / 2) / TILE);
+        var snapRow = Math.round((dragY - GRID_OFFSET_Y - TILE / 2) / TILE);
+        var cCol = Math.max(0, Math.min(snapCol, GRID_COLS - 1));
+        var cRow = Math.max(0, Math.min(snapRow, GRID_ROWS - 1));
 
-        // Highlight — verde se válido, vermelho se inválido
         var valid = canPlaceItem(draggingItem, cCol, cRow);
-        ctx.fillStyle = valid ? 'rgba(100, 255, 100, 0.2)' : 'rgba(255, 100, 100, 0.2)';
-        ctx.fillRect(cCol * TILE_SIZE, cRow * TILE_SIZE, def.tilesW * TILE_SIZE, def.tilesH * TILE_SIZE);
+        ctx.fillStyle = valid ? 'rgba(100,255,100,0.2)' : 'rgba(255,100,100,0.2)';
+        ctx.fillRect(gridToPixelX(cCol), gridToPixelY(cRow), TILE, TILE);
 
-        drawItem(draggingItem, dragX - (def.tilesW * TILE_SIZE) / 2, dragY - (def.tilesH * TILE_SIZE) / 2);
+        drawItem(draggingItem, dragX - TILE / 2, dragY - TILE / 2);
     }
 }
 
-
 // ============================================
-// COLISÃO — VALIDAÇÃO DE POSIÇÃO
+// COLISÃO
 // ============================================
-
 function canPlaceItem(itemId, col, row) {
+    if (col < 0 || row < 0 || col >= GRID_COLS || row >= GRID_ROWS) return false;
+
     var def = ITEM_DEFS[itemId];
     if (!def) return false;
 
-    // Verifica se cabe na grid
-    if (col < 0 || row < 0) return false;
-    if (col + def.tilesW > GRID_COLS) return false;
-    if (row + def.tilesH > GRID_ROWS) return false;
+    var zone = ZONE_MAP[row][col];
+    if (zone === ZONE_BLOCKED) return false;
+    if (def.zone === ZONE_FLOOR && zone !== ZONE_FLOOR) return false;
+    if (def.zone === ZONE_WALL && zone !== ZONE_WALL) return false;
 
-    // Verifica se todas as células são da zona correta
-    for (var r = row; r < row + def.tilesH; r++) {
-        for (var c = col; c < col + def.tilesW; c++) {
-            var zone = ZONE_MAP[r][c];
-
-            if (def.zone === ZONE_FLOOR && zone !== ZONE_FLOOR) return false;
-            if (def.zone === ZONE_WALL && zone !== ZONE_WALL) return false;
-            if (def.zone === ZONE_LAMP && zone !== ZONE_LAMP) return false;
-        }
-    }
-
-    // Verifica sobreposição com outros itens (exceto combos permitidos)
+    // Anti-sobreposição
     var visible = getAllVisibleItems();
     for (var i = 0; i < visible.length; i++) {
         var otherId = visible[i];
         if (otherId === itemId) continue;
         var otherPos = itemPositions[otherId];
         if (!otherPos) continue;
-        var otherDef = ITEM_DEFS[otherId];
-        if (!otherDef) continue;
-
-        // Checa sobreposição de retângulos
-        var overlap = !(
-            col + def.tilesW <= otherPos.col ||
-            otherPos.col + otherDef.tilesW <= col ||
-            row + def.tilesH <= otherPos.row ||
-            otherPos.row + otherDef.tilesH <= row
-        );
-
-        if (overlap) {
-            // Combos permitidos: computador + mesa
+        if (otherPos.col === col && otherPos.row === row) {
+            // Combos permitidos
             if ((itemId === 'computer' && otherId === 'desk') ||
-                (itemId === 'desk' && otherId === 'computer')) {
-                continue;
-            }
+                (itemId === 'desk' && otherId === 'computer')) continue;
             return false;
         }
     }
-
     return true;
 }
-
-
-// ============================================
-// ADICIONAR ITEM AO QUARTO
-// ============================================
 
 function addItemToRoom(item) {
     if (shopItems.includes(item.id)) return;
@@ -404,15 +356,43 @@ function addItemToRoom(item) {
     drawRoom();
 }
 
+// ============================================
+// ESTADOS DO PERSONAGEM: DORMIR / TRABALHAR
+// ============================================
+var btnSleep = document.getElementById('btn-sleep');
+
+function startSleeping() {
+    if (player.state === 'sleeping') {
+        // Acordar
+        player.state = 'idle';
+        btnSleep.textContent = 'Dormir 💤';
+    } else {
+        player.state = 'sleeping';
+        btnSleep.textContent = 'Acordar ☀️';
+    }
+    drawRoom();
+}
+
+btnSleep.addEventListener('click', startSleeping);
+
+// Chamada pelo timer.js quando inicia o foco
+function startWorking() {
+    player.state = 'working';
+    drawRoom();
+}
+
+// Chamada pelo timer.js quando termina/pausa
+function stopWorking() {
+    player.state = 'idle';
+    drawRoom();
+}
 
 // ============================================
-// MOVIMENTO DO PERSONAGEM
+// MOVIMENTO
 // ============================================
-
-var walkAnimTimer = null;
-
 function movePlayer(direction) {
     if (playerAnimating) return;
+    if (player.state === 'sleeping' || player.state === 'working') return;
 
     player.direction = direction;
     player.walking = true;
@@ -426,24 +406,22 @@ function movePlayer(direction) {
     if (direction === 'left')  newCol--;
     if (direction === 'right') newCol++;
 
-    // Limites (não entra na parede - row 0)
     if (newCol < 0 || newCol >= GRID_COLS) { player.walking = false; drawRoom(); return; }
-    if (newRow < 1 || newRow >= GRID_ROWS) { player.walking = false; drawRoom(); return; }
+    if (newRow < 2 || newRow >= GRID_ROWS) { player.walking = false; drawRoom(); return; }
 
     player.col = newCol;
     player.row = newRow;
 
-    playerTargetX = player.col * TILE_SIZE + (TILE_SIZE - player.size) / 2;
-    playerTargetY = player.row * TILE_SIZE + (TILE_SIZE - player.size) / 2;
+    playerTargetX = GRID_OFFSET_X + player.col * TILE;
+    playerTargetY = GRID_OFFSET_Y + player.row * TILE;
 
     playerAnimating = true;
     soundStep();
 
-    // Alterna frames de andar
     if (walkAnimTimer) clearInterval(walkAnimTimer);
     walkAnimTimer = setInterval(function () {
-        player.walkFrame = (player.walkFrame + 1) % 2;
-    }, 150);
+        player.walkFrame = (player.walkFrame + 1) % 3;
+    }, 120);
 
     animatePlayer();
     saveData('playerPosition', { col: player.col, row: player.row });
@@ -493,15 +471,13 @@ dpadButtons.forEach(function (btn) {
     });
 });
 
-
 // ============================================
 // DRAG AND DROP
 // ============================================
-
 var draggingItem = null;
 var dragX = 0;
 var dragY = 0;
-var dragPreviousPos = null; // salva posição anterior caso drop seja inválido
+var dragPreviousPos = null;
 
 function getCanvasPosition(event) {
     var rect = canvas.getBoundingClientRect();
@@ -517,25 +493,20 @@ function getItemAtPosition(x, y) {
     for (var i = 0; i < allItems.length; i++) {
         var id = allItems[i];
         var pos = itemPositions[id];
-        var def = ITEM_DEFS[id];
-        if (!pos || !def) continue;
-        var ix = pos.col * TILE_SIZE;
-        var iy = pos.row * TILE_SIZE;
-        if (x >= ix && x < ix + def.tilesW * TILE_SIZE &&
-            y >= iy && y < iy + def.tilesH * TILE_SIZE) {
-            return id;
-        }
+        if (!pos) continue;
+        var ix = gridToPixelX(pos.col);
+        var iy = gridToPixelY(pos.row);
+        if (x >= ix && x < ix + TILE && y >= iy && y < iy + TILE) return id;
     }
     return null;
 }
 
 function dropItem() {
     if (!draggingItem) return;
-    var def = ITEM_DEFS[draggingItem];
-    var snapCol = Math.round((dragX - (def.tilesW * TILE_SIZE) / 2) / TILE_SIZE);
-    var snapRow = Math.round((dragY - (def.tilesH * TILE_SIZE) / 2) / TILE_SIZE);
-    var cCol = Math.max(0, Math.min(snapCol, GRID_COLS - def.tilesW));
-    var cRow = Math.max(0, Math.min(snapRow, GRID_ROWS - def.tilesH));
+    var snapCol = Math.round((dragX - GRID_OFFSET_X - TILE / 2) / TILE);
+    var snapRow = Math.round((dragY - GRID_OFFSET_Y - TILE / 2) / TILE);
+    var cCol = Math.max(0, Math.min(snapCol, GRID_COLS - 1));
+    var cRow = Math.max(0, Math.min(snapRow, GRID_ROWS - 1));
 
     if (canPlaceItem(draggingItem, cCol, cRow)) {
         itemPositions[draggingItem] = { col: cCol, row: cRow };
@@ -552,15 +523,14 @@ function dropItem() {
     drawRoom();
 }
 
-// Mouse
 canvas.addEventListener('mousedown', function (e) {
+    if (player.state === 'sleeping' || player.state === 'working') return;
     var pos = getCanvasPosition(e);
-    var itemId = getItemAtPosition(pos.x, pos.y);
-    if (itemId) {
-        draggingItem = itemId;
-        dragPreviousPos = { col: itemPositions[itemId].col, row: itemPositions[itemId].row };
-        dragX = pos.x;
-        dragY = pos.y;
+    var id = getItemAtPosition(pos.x, pos.y);
+    if (id) {
+        draggingItem = id;
+        dragPreviousPos = { col: itemPositions[id].col, row: itemPositions[id].row };
+        dragX = pos.x; dragY = pos.y;
         canvas.style.cursor = 'grabbing';
     }
 });
@@ -572,8 +542,7 @@ canvas.addEventListener('mousemove', function (e) {
         return;
     }
     var pos = getCanvasPosition(e);
-    dragX = pos.x;
-    dragY = pos.y;
+    dragX = pos.x; dragY = pos.y;
     drawRoom();
 });
 
@@ -581,23 +550,21 @@ canvas.addEventListener('mouseup', dropItem);
 canvas.addEventListener('mouseleave', function () {
     if (draggingItem) {
         if (dragPreviousPos) itemPositions[draggingItem] = dragPreviousPos;
-        draggingItem = null;
-        dragPreviousPos = null;
+        draggingItem = null; dragPreviousPos = null;
         canvas.style.cursor = 'default';
         drawRoom();
     }
 });
 
-// Touch
 canvas.addEventListener('touchstart', function (e) {
+    if (player.state === 'sleeping' || player.state === 'working') return;
     e.preventDefault();
     var pos = getCanvasPosition(e);
-    var itemId = getItemAtPosition(pos.x, pos.y);
-    if (itemId) {
-        draggingItem = itemId;
-        dragPreviousPos = { col: itemPositions[itemId].col, row: itemPositions[itemId].row };
-        dragX = pos.x;
-        dragY = pos.y;
+    var id = getItemAtPosition(pos.x, pos.y);
+    if (id) {
+        draggingItem = id;
+        dragPreviousPos = { col: itemPositions[id].col, row: itemPositions[id].row };
+        dragX = pos.x; dragY = pos.y;
     }
 }, { passive: false });
 
@@ -605,26 +572,21 @@ canvas.addEventListener('touchmove', function (e) {
     if (!draggingItem) return;
     e.preventDefault();
     var pos = getCanvasPosition(e);
-    dragX = pos.x;
-    dragY = pos.y;
+    dragX = pos.x; dragY = pos.y;
     drawRoom();
 }, { passive: false });
 
 canvas.addEventListener('touchend', dropItem);
 
-
 // ============================================
 // INICIALIZAÇÃO
 // ============================================
-
 loadAllSprites().then(function () {
     console.log('🎨 Sprites carregados!');
     ensurePositions();
-
-    playerPixelX = player.col * TILE_SIZE + (TILE_SIZE - player.size) / 2;
-    playerPixelY = player.row * TILE_SIZE + (TILE_SIZE - player.size) / 2;
+    playerPixelX = GRID_OFFSET_X + player.col * TILE;
+    playerPixelY = GRID_OFFSET_Y + player.row * TILE;
     playerTargetX = playerPixelX;
     playerTargetY = playerPixelY;
-
     drawRoom();
 });
