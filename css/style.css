@@ -414,37 +414,137 @@ button:disabled {
 }
 
 
+/* --- D-PAD --- */
+
+#dpad {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin: 6px 0;
+}
+
+.dpad-btn {
+    width: 48px;
+    height: 48px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    transition: transform 0.05s;
+}
+
+.dpad-btn img {
+    width: 100%;
+    height: 100%;
+    image-rendering: pixelated;
+    pointer-events: none;
+}
+
+.dpad-btn:active {
+    transform: scale(0.85);
+}
+
+
 /* --- RESPONSIVIDADE --- */
-/* Ajustes pra telas menores (celular) */
 
-@media (max-width: 480px) {
-    #start-title {
-        font-size: 20px;
+@media (max-width: 600px) {
+    body {
+        padding: 8px;
     }
 
-    #start-icon {
-        font-size: 48px;
-    }
-
-    #btn-play {
-        font-size: 12px;
-        padding: 14px 36px;
+    #game-container {
+        padding: 10px;
+        gap: 10px;
     }
 
     #game-header h1 {
         font-size: 10px;
     }
 
+    #coins-display {
+        font-size: 10px;
+        padding: 6px 8px;
+    }
+
     #timer-display {
         font-size: 24px;
     }
 
-    button {
+    #timer-config {
+        font-size: 7px;
+    }
+
+    #timer-config input {
         font-size: 8px;
-        padding: 8px 12px;
+        width: 48px;
+        padding: 4px 6px;
+    }
+
+    #round-display {
+        font-size: 7px;
+    }
+
+    button {
+        font-size: 7px;
+        padding: 8px 10px;
+    }
+
+    #timer-controls {
+        gap: 4px;
+    }
+
+    #timer-status {
+        font-size: 8px;
+    }
+
+    .dpad-btn {
+        width: 40px;
+        height: 40px;
+    }
+
+    #game-nav {
+        gap: 4px;
+    }
+
+    #game-nav button {
+        font-size: 7px;
+        padding: 8px 6px;
     }
 
     #shop-items {
         grid-template-columns: 1fr;
+    }
+
+    .item-name { font-size: 7px; }
+    .item-price { font-size: 7px; }
+    .shop-item button { font-size: 7px; padding: 5px 8px; }
+}
+
+/* Tela inicial responsiva */
+@media (max-width: 600px) {
+    #start-title {
+        font-size: 18px;
+    }
+
+    #start-icon {
+        font-size: 48px;
+    }
+
+    #start-subtitle {
+        font-size: 8px;
+    }
+
+    #start-instructions span {
+        font-size: 6px;
+    }
+
+    #btn-play {
+        font-size: 12px;
+        padding: 12px 32px;
     }
 }

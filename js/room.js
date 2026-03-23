@@ -89,16 +89,17 @@ if (savedPlayer) { player.col = savedPlayer.col; player.row = savedPlayer.row; }
 
 var playerAnimating = false;
 var playerPixelX, playerPixelY, playerTargetX, playerTargetY;
-var PLAYER_SPEED = 8;
+var PLAYER_SPEED = 5;
 var walkAnimTimer = null;
 
+// Walk cycle: frame1 → frame2 → frame3 → frame2 (ping-pong)
 var PLAYER_SPRITES = {
     idle: { down: 'Front_Walk_1', up: 'Back_Stand', left: 'Side_Left', right: 'Side_Right' },
     walk: {
-        down:  ['Front_Walk_1', 'Front_Walk_2', 'Front_Walk_3'],
-        up:    ['Back_Stand', 'Back_Walk_2', 'Back_Walk_3'],
-        left:  ['Side_Left_Walk_1', 'Side_Left_Walk_2', 'Side_Left_Walk_3'],
-        right: ['Side_Right_Walk_1', 'Side_Right_Walk_2', 'Side_Right_Walk_3'],
+        down:  ['Front_Walk_1', 'Front_Walk_2', 'Front_Walk_3', 'Front_Walk_2'],
+        up:    ['Back_Stand', 'Back_Walk_2', 'Back_Walk_3', 'Back_Walk_2'],
+        left:  ['Side_Left', 'Side_Left_Walk_1', 'Side_Left_Walk_2', 'Side_Left_Walk_3'],
+        right: ['Side_Right', 'Side_Right_Walk_1', 'Side_Right_Walk_2', 'Side_Right_Walk_3'],
     },
 };
 
@@ -385,8 +386,8 @@ function movePlayer(direction) {
 
     if (walkAnimTimer) clearInterval(walkAnimTimer);
     walkAnimTimer = setInterval(function () {
-        player.walkFrame = (player.walkFrame + 1) % 3;
-    }, 120);
+        player.walkFrame = (player.walkFrame + 1) % 4;
+    }, 100);
 
     animatePlayer();
     saveData('playerPosition', { col: player.col, row: player.row });
