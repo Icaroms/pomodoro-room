@@ -8,7 +8,7 @@
  * - Rodada 4: descanso longo (15 min), encerra o ciclo
  * - Cada rodada concluída = 10 moedas
  * 
- * Status: ☕ Live | 🔥 Focado | 🌿 Descansando
+ * Status: ☕ Livre | 🔥 Focado | 🌿 Descansando
  * 
  * Depende de: coins.js, sound.js, room.js (startWorking/stopWorking)
  */
@@ -103,7 +103,7 @@ function resetTimer() {
     timerConfig.classList.remove('hidden');
     updateDisplay();
     updateRoundDisplay();
-    updateStatus('☕ Live');
+    updateStatus('☕ Livre');
     updateButtons();
     stopWorking();
 }
@@ -153,13 +153,13 @@ function finishCycle() {
             currentRound = 1;
             timeRemaining = workDuration;
             timerConfig.classList.remove('hidden');
-            updateStatus('☕ Live');
+            updateStatus('☕ Livre');
         } else {
             // Próxima rodada
             currentRound++;
             isWorkMode = true;
             timeRemaining = workDuration;
-            updateStatus('☕ Live');
+            updateStatus('☕ Livre');
             timerConfig.classList.remove('hidden');
         }
     }
@@ -188,4 +188,4 @@ workMinutesInput.addEventListener('change', function () {
 // --- Inicialização ---
 updateDisplay();
 updateRoundDisplay();
-updateStatus('☕ Live');
+updateStatus('☕ Livre');
