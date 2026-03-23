@@ -92,6 +92,7 @@ function purchaseItem(item) {
 }
 
 btnShop.addEventListener('click', function () {
+    if (isSleeping()) { alert('💤 Acorde primeiro!'); return; }
     gameCanvas.classList.add('hidden');
     shopPanel.classList.remove('hidden');
     btnShop.classList.add('active');

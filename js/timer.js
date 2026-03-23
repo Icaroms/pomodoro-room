@@ -79,6 +79,7 @@ function updateButtons() {
 
 function startTimer() {
     if (isRunning) return;
+    if (isSleeping()) { alert('💤 Acorde primeiro para iniciar o foco!'); return; }
 
     // Se é o início de uma rodada de trabalho, lê o tempo configurado
     if (isWorkMode && timeRemaining === workDuration) {
